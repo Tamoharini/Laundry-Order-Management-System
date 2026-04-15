@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CleanPress — Laundry OMS</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="logo">🧺 CleanPress <span>Laundry OMS</span></div>
+  <nav>
+    <button class="active" onclick="showPage('dashboard')" id="nav-dashboard">📊 <span>Dashboard</span></button>
+    <button onclick="showPage('create')"    id="nav-create">➕ <span>New Order</span></button>
+    <button onclick="showPage('orders')"   id="nav-orders">📋 <span>Orders</span></button>
+  </nav>
+</header>
+
+<main>
+  <div class="page active" id="page-dashboard">
+    <div class="section-header">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Real-time overview of your laundry operations</p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="renderDashboard()">🔄 Refresh</button>
+    </div>
+
+    <div class="stat-grid" id="stat-grid">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:4px;">
+      <div class="card">
+        <div class="card-title">📦 Orders by Status</div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">💰 Revenue Breakdown</div>
+        <div id="revenue-breakdown"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">🕐 Recent Orders</div>
+      <div id="recent-orders-table"></div>
+    </div>
+</div>
+  <div class="page" id="page-create">
+    <div class="section-header">
+      <div>
+        <h2>New Order</h2>
+        <p>Fill in customer details and garments</p>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start;">
+      <div class="card">
+        <div class="card-title">👤 Customer Details</div>
+        <div class="form-grid" style="margin-bottom:20px;">
+          <div class="form-group">
+            <label>Customer Name *</label>
+            <input type="text" id="cust-name" placeholder="e.g. Rahul Sharma" />
+          </div>
+          <div class="form-group">
+            <label>Phone Number *</label>
+            <input type="tel" id="cust-phone" placeholder="e.g. 9876543210" maxlength="10" />
+          </div>
+          <div class="form-group">
+            <label>Estimated Delivery</label>
+            <input type="date" id="delivery-date" />
+          </div>
+          <div class="form-group">
+            <label>Special Instructions</label>
+            <input type="text" id="special-notes" placeholder="e.g. Handle with care" />
+          </div>
+        </div>
+
+        <div class="card-title">👕 Garments</div>
+        <div id="garment-list"></div>
+        <button class="btn-add-garment" onclick="addGarmentRow()">+ Add Garment</button>
+
+        <div id="bill-summary" style="display:none;">
+          <div>
+            <div class="bill-label">TOTAL BILL</div>
+            <div class="bill-amount" id="bill-amount">₹0</div>
+            <div class="bill-date" id="bill-delivery-label"></div>
+          </div>
+          <div style="text-align:right;">
+            <div class="bill-label">ITEMS</div>
+            <div style="font-size:1.5rem;font-weight:700;" id="bill-items">0</div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;gap:10px;">
+          <button class="btn btn-primary" onclick="submitOrder()">✅ Place Order</button>
+          <button class="btn" style="background:#f1f5f9;color:var(--text);" onclick="resetForm()">🔄 Reset</button>
+        </div>
+      </div>
+
+      <!-- Price Card -->
+      <div class="card">
+        <div class="card-title">💲 Price List</div>
+        <table>
+          <thead><tr><th>Garment</th><th>Price</th></tr></thead>
+          <tbody id="price-table"></tbody>
+        </table>
+        <div style="margin-top:16px;padding:12px;background:var(--primary-light);border-radius:8px;font-size:.82rem;color:var(--muted);">
+          💡 Prices are per piece. Select garment type to auto-fill price.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-orders">
+    <div class="section-header">
+      <div>
+        <h2>All Orders</h2>
+        <p>Manage and update order statuses</p>
+      </div>
+    </div>
+
+    <div class="filters">
+      <input type="text" id="filter-search" placeholder="🔍 Search by name, phone, garment…" oninput="renderOrders()" />
+      <select id="filter-status" onchange="renderOrders()">
+        <option value="">All Statuses</option>
+        <option value="RECEIVED">Received</option>
+        <option value="PROCESSING">Processing</option>
+        <option value="READY">Ready</option>
+        <option value="DELIVERED">Delivered</option>
+      </select>
+      <span class="filter-count" id="filter-count"></span>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Garments</th>
+              <th>Bill</th>
+              <th>Status</th>
+              <th>Delivery</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+        <div id="orders-empty" class="empty" style="display:none;">
+          <div class="empty-icon">📭</div>
+          <p>No orders found matching your filters.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Order Details</h3>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="script.js"></script>
+</body>
+</html>
